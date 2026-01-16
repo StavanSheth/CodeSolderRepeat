@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ahmedabad Wards Map</title>
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+    
+    .gradient-marker {
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .gradient-marker:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Control Panel */
+    .control-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    /* Modern Button Styling */
+    .ward-route-button {
+      background: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      color: #1a1a1a;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .ward-route-button:hover {
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .ward-route-button:active {
+      transform: translateY(0);
+    }
+    
+    .ward-route-button.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    /* Info Card */
+    .info-card {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      max-width: 350px;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .info-card.active {
+      display: block;
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .info-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+    
+    .info-card p {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    
+    .info-card .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .info-card .stat:last-child {
+      border-bottom: none;
+    }
+    
+    .info-card .stat-label {
+      color: #666;
+      font-size: 13px;
+    }
+    
+    .info-card .stat-value {
+      color: #1a1a1a;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    
+    /* Legend */
+    .legend {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+    }
+    
+    .legend h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    
+    .legend-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+    }
+    
+    .legend-label {
+      color: #666;
+    }
+    
+    /* Current Load Box */
+    .current-load-box {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      min-width: 160px;
+      text-align: center;
+    }
+    
+    .current-load-box h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1a1a1a;
+    }
+    
+    .load-display {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+<!-- Control Panel -->
+<div class="control-panel">
+  <button id="wardRouteBtn" class="ward-route-button">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+      <circle cx="12" cy="10" r="3"></circle>
+    </svg>
+    Plan Ward Route
+  </button>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <h4>Bin Fill Levels</h4>
+  <div class="legend-item">
+    <div class="legend-color" style="background: #8B0000;"></div>
+    <span class="legend-label">100% Full</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-color" style="background: #FF0000;"></div>
+    <span class="legend-label">90% Full</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-color" style="background: #FFFF00;"></div>
+    <span class="legend-label">55% Full</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-color" style="background: #00FF00;"></div>
+    <span class="legend-label">30% Full</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-color" style="background: #006400;"></div>
+    <span class="legend-label">10% Full</span>
+  </div>
+</div>
+
+<!-- Info Card -->
+<div class="info-card" id="infoCard">
+  <h3 id="infoTitle">Route Information</h3>
+  <div id="infoContent"></div>
+</div>
+
+<!-- Current Load Box -->
+<div class="current-load-box">
+  <h4>Current Load</h4>
+  <div class="load-display">0 / 1000 units</div>
+</div>
+
+<div id="map"></div>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // TomTom API Key
+ const params = new URLSearchParams(window.location.search);
+const API_KEY = params.get("key");
+
+if (!API_KEY) {
+  alert("TomTom API key missing");
+  throw new Error("Missing API key");
+}
+
+
+  // Initialize the map with initial view on Ahmedabad
+  const map = L.map('map').setView([23.0225, 72.5714], 11); // Ahmedabad coordinates
+  // Add base map (OpenStreetMap tiles)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+  // Route tracking variables
+  let selectedStartPoint = null;
+  let selectedEndPoint = null;
+  let routeLayer = null;
+  let vehicleMarker = null;
+  let animationInterval = null;
+  let currentTruckWeight = 0;
+  
+  // Ward route mode variables
+  let wardRouteMode = false;
+  let selectedWard = null;
+  let wardLayer = null;
+  let wardPointsData = {}; // Store points by ward with fill levels
+  let wardOffices = {}; // Store ward office locations
+  let rtsLocations = []; // Store RTS locations
+  // Function to get color based on garbage amount (heatmap)
+  function getHeatmapColor(amount, min, max) {
+    // Normalize the amount between 0 and 1
+    const normalized = (amount - min) / (max - min);
+    // Color scale from green (low) to red (high)
+    const r = Math.floor(255 * normalized);
+    const g = Math.floor(255 * (1 - normalized));
+    const b = 0;
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  // Function to check if point is inside polygon (ray casting algorithm)
+  function isPointInPolygon(point, polygon) {
+    const x = point[0], y = point[1];
+    let inside = false;
+    
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][0], yi = polygon[i][1];
+      const xj = polygon[j][0], yj = polygon[j][1];
+      
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    
+    return inside;
+  }
+
+  // Function to find which ward contains a point
+  function findWardForPoint(point, wards) {
+    for (const ward of wards) {
+      // Check if point is in any polygon ring (for multipolygons)
+      const coords = ward.geometry.coordinates;
+      for (const ring of coords) {
+        if (isPointInPolygon(point, ring)) {
+          return ward;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Function to generate random color (red, yellow, green shades only)
+  function getRandomColor() {
+    const colors = [
+      // Red shades
+      '#FF0000', '#FF3333', '#FF6666', '#FF9999', '#FFCCCC', '#CC0000', '#990000',
+      // Yellow shades  
+      '#FFFF00', '#FFFF33', '#FFFF66', '#FFFF99', '#FFFFCC', '#CCCC00', '#999900',
+      // Green shades
+      '#00FF00', '#33FF33', '#66FF66', '#99FF99', '#CCFFCC', '#00CC00', '#009900'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  // Function to clear route and reset selection
+  function clearRoute() {
+    if (routeLayer) {
+      map.removeLayer(routeLayer);
+      routeLayer = null;
+    }
+    if (vehicleMarker) {
+      map.removeLayer(vehicleMarker);
+      vehicleMarker = null;
+    }
+    if (animationInterval) {
+      clearInterval(animationInterval);
+      animationInterval = null;
+    }
+    selectedStartPoint = null;
+    selectedEndPoint = null;
+  }
+
+  // Function to fetch and display route
+  function fetchRoute(start, end) {
+    const url = `https://api.tomtom.com/routing/1/calculateRoute/${start[0]},${start[1]}:${end[0]},${end[1]}/json?key=${API_KEY}&traffic=true`;
+    
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0].legs[0].points;
+          const routePath = route.map(point => [point.latitude, point.longitude]);
+
+          // Draw route
+          routeLayer = L.polyline(routePath, {
+            color: 'blue',
+            weight: 5,
+            opacity: 0.7
+          }).addTo(map);
+
+          // Create vehicle icon
+          const vehicleIcon = L.icon({
+            iconUrl: 'https://img.icons8.com/fluency/48/truck.png',
+            iconSize: [40, 40],
+          });
+
+          // Add vehicle marker at start of route
+          vehicleMarker = L.marker(routePath[0], {
+            icon: vehicleIcon
+          }).addTo(map);
+
+          // Fit map to show the entire route
+          map.fitBounds(routePath);
+
+          // Animate vehicle movement
+          let currentPoint = 0;
+          animationInterval = setInterval(() => {
+            if (currentPoint < routePath.length - 1) {
+              currentPoint++;
+              vehicleMarker.setLatLng(routePath[currentPoint]);
+            } else {
+              clearInterval(animationInterval);
+              animationInterval = null;
+            }
+          }, 100); // Move faster for better visibility
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching route:', err);
+        alert('Failed to fetch route. Please try again.');
+        clearRoute();
+      });
+  }
+
+  // Function to handle point click
+  function onPointClick(point, ward) {
+    // Ward route mode - not used anymore, route starts automatically on ward selection
+    if (wardRouteMode) {
+      return;
+    }
+    
+    // Normal two-point route mode
+    if (!selectedStartPoint) {
+      // First click - set as start point
+      selectedStartPoint = point;
+      alert(`Start point selected in ward: ${ward.properties.Name}\nClick another point to set destination.`);
+    } else if (!selectedEndPoint) {
+      // Second click - set as end point and fetch route
+      selectedEndPoint = point;
+      alert(`Destination selected in ward: ${ward.properties.Name}\nFetching route...`);
+      fetchRoute(selectedStartPoint, selectedEndPoint);
+    } else {
+      // Already have both points - clear and start over
+      clearRoute();
+      selectedStartPoint = point;
+      alert(`Route cleared. Start point selected in ward: ${ward.properties.Name}\nClick another point to set destination.`);
+    }
+  }
+
+  // Function to create route through all points in ward
+  function createWardRoute(wardName) {
+    const wardData = wardPointsData[wardName];
+    if (!wardData || wardData.length < 1) {
+      alert('Not enough points in this ward for a route.');
+      return;
+    }
+    
+    // Get ward office location
+    const wardOffice = wardOffices[wardName];
+    if (!wardOffice) {
+      alert('Ward office not found for ' + wardName);
+      return;
+    }
+    
+    // Reset current truck weight
+    currentTruckWeight = 0;
+    
+    // Reset load display
+    const loadDisplay = document.querySelector('.load-display');
+    if (loadDisplay) {
+      loadDisplay.textContent = '0 / 1000 units';
+    }
+    
+    // Implement nearest neighbor algorithm with fill level weighting for fuel efficiency
+    const TRUCK_CAPACITY = 1000;
+    let currentLoad = 0;
+    const routePoints = [wardOffice]; // Start at ward office
+    const visitedBins = [];
+    const remainingBins = [...wardData];
+    let currentLocation = wardOffice;
+    
+    // Collect bins using nearest neighbor approach with fill level bias
+    while (remainingBins.length > 0 && currentLoad < TRUCK_CAPACITY) {
+      let bestBin = null;
+      let bestScore = Infinity;
+      let bestIndex = -1;
+      
+      // Find best next bin considering both distance and fill level
+      for (let i = 0; i < remainingBins.length; i++) {
+        const bin = remainingBins[i];
+        
+        // Strictly enforce capacity limit - skip if bin would exceed 1000 units
+        if (currentLoad + bin.fillLevel > TRUCK_CAPACITY) continue;
+        
+        // Calculate distance to bin
+        const distance = Math.sqrt(
+          Math.pow(bin.location[0] - currentLocation[0], 2) + 
+          Math.pow(bin.location[1] - currentLocation[1], 2)
+        );
+        
+        // Score: lower is better. Balance distance with fill level priority
+        // Normalize fill level (0-100) and distance, give more weight to distance for fuel efficiency
+        const fillLevelFactor = (100 - bin.fillLevel) / 100; // Lower score for fuller bins
+        const score = distance * 0.7 + fillLevelFactor * 0.3; // 70% distance, 30% fill level
+        
+        if (score < bestScore) {
+          bestScore = score;
+          bestBin = bin;
+          bestIndex = i;
+        }
+      }
+      
+      // If no bin found (all exceed capacity), stop collecting
+      if (bestBin === null) break;
+      
+      // Add bin to route
+      routePoints.push(bestBin.location);
+      visitedBins.push(bestBin);
+      currentLoad += bestBin.fillLevel;
+      currentLocation = bestBin.location;
+      
+      // Remove from remaining bins
+      remainingBins.splice(bestIndex, 1);
+    }
+    
+    // Find nearest RTS from last collection point
+    const lastPoint = routePoints[routePoints.length - 1];
+    let nearestRTS = rtsLocations[0];
+    let minDistance = Infinity;
+    
+    for (const rts of rtsLocations) {
+      const dist = Math.sqrt(
+        Math.pow(rts.location[0] - lastPoint[0], 2) + 
+        Math.pow(rts.location[1] - lastPoint[1], 2)
+      );
+      if (dist < minDistance) {
+        minDistance = dist;
+        nearestRTS = rts;
+      }
+    }
+    
+    routePoints.push(nearestRTS.location); // End at RTS
+    
+    // Display route info in card
+    const infoCard = document.getElementById('infoCard');
+    const infoTitle = document.getElementById('infoTitle');
+    const infoContent = document.getElementById('infoContent');
+    
+    infoTitle.textContent = `Route: ${wardName}`;
+    infoContent.innerHTML = `
+      <div class="stat">
+        <span class="stat-label">Start Point</span>
+        <span class="stat-value">Ward Office</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Bins to Collect</span>
+        <span class="stat-value">${visitedBins.length} bins</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Current Weight</span>
+        <span class="stat-value">${currentTruckWeight} / ${TRUCK_CAPACITY} units</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">End Point</span>
+        <span class="stat-value">${nearestRTS.name}</span>
+      </div>
+    `;
+    infoCard.classList.add('active');
+    
+    // Build waypoints string for TomTom API
+    const waypoints = routePoints.map(p => `${p[0]},${p[1]}`).join(':');
+    const url = `https://api.tomtom.com/routing/1/calculateRoute/${waypoints}/json?key=${API_KEY}&traffic=true`;
+    
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0].legs.flatMap(leg => leg.points);
+          const routePath = route.map(point => [point.latitude, point.longitude]);
+          
+          // Calculate update points for bin collection
+          const updatePoints = [];
+          for (let i = 0; i < visitedBins.length; i++) {
+            const bin = visitedBins[i];
+            const binLocation = bin.location;
+            let minDist = Infinity;
+            let closestIndex = 0;
+            for (let j = 0; j < routePath.length; j++) {
+              const dist = Math.sqrt(Math.pow(routePath[j][0] - binLocation[0], 2) + Math.pow(routePath[j][1] - binLocation[1], 2));
+              if (dist < minDist) {
+                minDist = dist;
+                closestIndex = j;
+              }
+            }
+            updatePoints.push({index: closestIndex, load: bin.fillLevel});
+          }
+          updatePoints.sort((a, b) => a.index - b.index);
+          
+          // Draw route
+          routeLayer = L.polyline(routePath, {
+            color: 'blue',
+            weight: 5,
+            opacity: 0.7
+          }).addTo(map);
+          
+          // Create vehicle icon
+          const vehicleIcon = L.icon({
+            iconUrl: 'https://img.icons8.com/fluency/48/truck.png',
+            iconSize: [40, 40],
+          });
+          
+          // Add vehicle marker
+          vehicleMarker = L.marker(routePath[0], {
+            icon: vehicleIcon
+          }).addTo(map);
+          
+          // Fit map to route
+          map.fitBounds(routePath);
+          
+          // Animate vehicle
+          let currentPoint = 0;
+          let collectedIndex = 0;
+          animationInterval = setInterval(() => {
+            if (currentPoint < routePath.length - 1) {
+              currentPoint++;
+              vehicleMarker.setLatLng(routePath[currentPoint]);
+              
+              // Check if we collected a bin
+              while (collectedIndex < updatePoints.length && currentPoint >= updatePoints[collectedIndex].index) {
+                // Enforce strict capacity limit during animation
+                if (currentTruckWeight + updatePoints[collectedIndex].load <= TRUCK_CAPACITY) {
+                  currentTruckWeight += updatePoints[collectedIndex].load;
+                }
+                collectedIndex++;
+                // Update the displays
+                const statDiv = document.querySelector('#infoContent .stat:nth-child(3) .stat-value');
+                if (statDiv) {
+                  statDiv.textContent = `${currentTruckWeight} / 1000 units`;
+                }
+                const loadDisplay = document.querySelector('.load-display');
+                if (loadDisplay) {
+                  loadDisplay.textContent = `${currentTruckWeight} / 1000 units`;
+                }
+              }
+            } else {
+              clearInterval(animationInterval);
+              animationInterval = null;
+            }
+          }, 50);
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching route:', err);
+        alert('Failed to fetch route. Please try again.');
+      });
+  }
+  
+  // Function to handle ward click
+  function onWardClick(ward) {
+    if (!wardRouteMode) return;
+    
+    selectedWard = ward;
+    const wardName = ward.properties.Name;
+    
+    // Highlight selected ward
+    wardLayer.eachLayer(layer => {
+      if (layer.feature.properties.Name === wardName) {
+        layer.setStyle({
+          color: '#7B1FA2',
+          weight: 4,
+          fillColor: '#E1BEE7',
+          fillOpacity: 0.3,
+          dashArray: ''
+        });
+      } else {
+        wardLayer.resetStyle(layer);
+      }
+    });
+    
+    // Clear any existing route
+    clearRoute();
+    
+    // Automatically start route from ward office
+    createWardRoute(wardName);
+  }
+  
+  // Load ward offices
+  fetch('Ward_office.geojson')
+    .then(res => res.json())
+    .then(data => {
+      // Mapping from ward names to ward office names
+      const wardToOfficeMapping = {
+        '36 DANILIMDA': 'New Muster Office Danilimda',
+        '39 GOMTIPUR': 'New Muster Office Danilimda',
+        '20 DARIYAPUR': 'New Muster Office Danilimda',
+        '12 NARODA': 'Naroda Road , SubZonal Office',
+        '47 VATVA': 'Naroda Road , SubZonal Office',
+        '14 ASARWA': 'Naroda Road , SubZonal Office',
+        '24 NIKOL': 'Nikol New Office',
+        '40 ODHAV': 'Nikol New Office',
+        '48 RAMOL HATHIJAN': 'Ramol-Subzone Muster Office',
+        '16 SHAHPUR': 'Shahibaug Ward Office',
+        '16 SHAHIBAG': 'Shahibaug Ward Office',
+        '46 LAMBHA': 'Shahibaug Ward Office',
+        '23 THAKKARBAPANAGAR': 'Thakkarbapa Nagar Ward Office',
+        '37 MANINAGAR': 'Thakkarbapa Nagar Ward Office',
+        '42 INDRAPURI': 'Thakkarbapa Nagar Ward Office',
+        '28 KHADIA': 'Khadia Sub Zonal Office',
+        '18 NAVRANGPURA': 'Navrangpura',
+        '30 PALDI': 'Navrangpura',
+        '10 S.P.STADIUM': 'Navrangpura',
+        '13 SAIJPUR BOGHA': 'Saijpur',
+        '31 VASNA': 'Vasna',
+        '19 JODHPUR': 'Vasna',
+        '34 MAKTAMPURA': 'Vasna',
+        '43 BHAIPURA HATKESHWAR': 'Bhaipura ',
+        '08 THALTEJ': 'Thaltej',
+        '32 VEJALPUR': 'Thaltej',
+        '33 SARKHEJ': 'Thaltej',
+        '44 KHOKHRA': 'Khohra Sub Zone Office',
+        '35 BAHERAMPURA': 'Khohra Sub Zone Office',
+        '07 GHATLODIA': 'Ghtalodiya',
+        '05 RANIP': 'Ranip',
+        '03 CHANDKHEDA': 'Chandkheda',
+        '01 GOTA': 'Gota Ward Office',
+        '02 CHANDLODIA': 'CHANDLODIA',
+        '19 BODAKDEV': 'Bodakdev Ward Office',
+        '45 ISANPUR': 'Isanpur',
+        '06 NEW WADAJ': 'New Wadaj',
+        '04 SABARMATI': 'Sabarmati',
+        '11 SARDARNAGAR': 'Sardarnagar',
+        '39 AMRAIWADI': 'Maninagar Master office',
+        '09 NARANPURA': 'NARANPURA',
+        '27 SARASPUR-RAKHIYAL': 'Saraspur Ward Office',
+        '41 VASTRAL': 'Vastral Ward Office',
+        '22 INDIA COLONY': 'Bapunagar Ward Office',
+        '26 BAPUNAGAR': 'Bapunagar Ward Office',
+        '25 VIRATNAGAR': 'Viratnagar Ward Office'
+      };
+      
+      data.features.forEach(feature => {
+        const officeName = feature.properties.Name;
+        const coords = feature.geometry.coordinates;
+        if (coords && coords.length >= 2) {
+          wardOffices[officeName] = [coords[1], coords[0]]; // [lat, lng]
+        }
+      });
+      
+      // Create reverse mapping: from ward to office location
+      const wardOfficeLocations = {};
+      for (const [wardName, officeName] of Object.entries(wardToOfficeMapping)) {
+        if (wardOffices[officeName]) {
+          wardOfficeLocations[wardName] = wardOffices[officeName];
+        }
+      }
+      
+      // Replace wardOffices with the mapped version
+      wardOffices = wardOfficeLocations;
+      
+      console.log('Loaded ward offices:', Object.keys(wardOffices).length);
+    })
+    .catch(err => console.error('Error loading ward offices:', err));
+  
+  // Load RTS locations
+  fetch('rts.geojson')
+    .then(res => res.json())
+    .then(data => {
+      data.features.forEach(feature => {
+        const name = feature.properties.name;
+        const coords = feature.geometry.coordinates;
+        rtsLocations.push({
+          name: name,
+          location: [coords[1], coords[0]] // [lat, lng]
+        });
+        
+        // Add RTS markers to map
+        const rtsIcon = L.icon({
+          iconUrl: 'https://img.icons8.com/fluency/48/factory.png',
+          iconSize: [50, 50],
+        });
+        L.marker([coords[1], coords[0]], { icon: rtsIcon })
+          .addTo(map)
+          .bindPopup(`<b>RTS:</b> ${name}`);
+      });
+      console.log('Loaded RTS locations:', rtsLocations.length);
+    })
+    .catch(err => console.error('Error loading RTS:', err));
+  
+  // Load wards.geojson
+  fetch('Wards.geojson')
+    .then(res => res.json())
+    .then(wards => {
+      // Generate ~80 points distributed across all wards
+      const allPoints = [];
+      
+      wards.features.forEach(feature => {
+        // Get bounding box for this ward
+        let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+        
+        feature.geometry.coordinates.forEach(ring => {
+          ring.forEach(coord => {
+            minLng = Math.min(minLng, coord[0]); // lng
+            maxLng = Math.max(maxLng, coord[0]);
+            minLat = Math.min(minLat, coord[1]); // lat
+            maxLat = Math.max(maxLat, coord[1]);
+          });
+        });
+        
+        // Generate 5-8 points per ward within its bounding box
+        const numPoints = 5 + Math.floor(Math.random() * 4); // 5-8 points per ward
+        
+        for (let i = 0; i < numPoints; i++) {
+          const lat = minLat + Math.random() * (maxLat - minLat);
+          const lng = minLng + Math.random() * (maxLng - minLng);
+          const point = [lat, lng];
+          allPoints.push({
+            point: point,
+            ward: feature
+          });
+          
+          // Store points by ward name (will update with fill levels later)
+          const wardName = feature.properties.Name;
+          if (!wardPointsData[wardName]) {
+            wardPointsData[wardName] = [];
+          }
+        }
+      });
+      
+      // Add ward boundaries to map
+      wardLayer = L.geoJSON(wards, {
+        style: {
+          color: '#2196F3',
+          weight: 2.5,
+          opacity: 0.8,
+          fillColor: '#E3F2FD',
+          fillOpacity: 0.1,
+          dashArray: '5, 5'
+        },
+        onEachFeature: (feature, layer) => {
+          layer.on('click', () => onWardClick(feature));
+          layer.on('mouseover', function(e) {
+            this.setStyle({
+              weight: 3.5,
+              color: '#1976D2',
+              fillOpacity: 0.2
+            });
+          });
+          layer.on('mouseout', function(e) {
+            if (!wardRouteMode || (selectedWard && selectedWard.properties.Name !== feature.properties.Name)) {
+              wardLayer.resetStyle(e.target);
+            }
+          });
+          layer.bindPopup(`<b>Ward:</b> ${feature.properties.Name}<br><small>Click in Ward Route Mode to plan route</small>`);
+        }
+      }).addTo(map);
+
+      // Add points to map with colors representing fill levels
+      const fillCategories = [
+        { name: 'dark-red', level: 100, color: '#8B0000' },
+        { name: 'red', level: 90, color: '#FF0000' },
+        { name: 'yellow', level: 55, color: '#FFFF00' },
+        { name: 'green', level: 30, color: '#00FF00' },
+        { name: 'dark-green', level: 10, color: '#006400' }
+      ];
+      
+      const allMarkers = []; // Store markers for zoom updates
+      
+      allPoints.forEach(({ point, ward }) => {
+        // Randomly assign a fill category
+        const category = fillCategories[Math.floor(Math.random() * fillCategories.length)];
+        const fillLevel = category.level;
+        const color = category.color;
+        
+        // Create gradient marker with radial fade effect
+        const markerSize = 50; // Initial size in pixels
+        const icon = L.divIcon({
+          className: 'gradient-marker',
+          html: `<div style="
+            width: ${markerSize}px;
+            height: ${markerSize}px;
+            background: radial-gradient(circle, ${color} 0%, ${color}cc 30%, ${color}66 60%, transparent 100%);
+            border-radius: 50%;
+          "></div>`,
+          iconSize: [markerSize, markerSize],
+          iconAnchor: [markerSize/2, markerSize/2]
+        });
+        
+        const marker = L.marker(point, { icon: icon }).addTo(map);
+        
+        // Store marker for zoom updates
+        allMarkers.push({ marker: marker, color: color, point: point });
+        
+        // Store bin data with fill level
+        const wardName = ward.properties.Name;
+        wardPointsData[wardName].push({
+          location: point,
+          fillLevel: fillLevel,
+          color: color,
+          category: category.name
+        });
+        
+        // Add popup
+        marker.bindPopup(
+          `<b>Ward:</b> ${ward.properties.Name}<br>` +
+          `<b>Location:</b> ${point[0].toFixed(4)}, ${point[1].toFixed(4)}<br>` +
+          `<b>Fill Level:</b> ${fillLevel}%<br>` +
+          `<b>Category:</b> ${category.name}<br>` +
+          `<small>Select ward in Ward Route Mode</small>`
+        );
+        
+        // Add click handler
+        marker.on('click', () => onPointClick(point, ward));
+      });
+
+      // Update marker sizes based on zoom level
+      function updateMarkerSizes() {
+        const zoom = map.getZoom();
+        // Scale factor: base size at zoom 11, increase as zoom increases
+        const scaleFactor = Math.pow(1.2, zoom - 11);
+        const markerSize = Math.max(25, 25 * scaleFactor);
+        
+        allMarkers.forEach(({ marker, color, point }) => {
+          const icon = L.divIcon({
+            className: 'gradient-marker',
+            html: `<div style="
+              width: ${markerSize}px;
+              height: ${markerSize}px;
+              background: radial-gradient(circle, ${color} 0%, ${color}cc 30%, ${color}66 60%, transparent 100%);
+              border-radius: 50%;
+            "></div>`,
+            iconSize: [markerSize, markerSize],
+            iconAnchor: [markerSize/2, markerSize/2]
+          });
+          marker.setIcon(icon);
+        });
+      }
+
+      // Add zoom event listener
+      map.on('zoomend', updateMarkerSizes);
+
+      // Auto-zoom to all points
+      if (allPoints.length > 0) {
+        const bounds = L.latLngBounds(allPoints.map(p => p.point));
+        map.fitBounds(bounds);
+      }
+      
+      console.log(`Generated ${allPoints.length} points across ${wards.features.length} wards`);
+    })
+    .catch(err => console.error("Error loading wards.geojson:", err));
+  
+  // Ward route button functionality
+  document.getElementById('wardRouteBtn').addEventListener('click', function() {
+    wardRouteMode = !wardRouteMode;
+    
+    if (wardRouteMode) {
+      this.classList.add('active');
+      this.innerHTML = `
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 11 12 14 22 4"></polyline>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        </svg>
+        Ward Route Mode: ON
+      `;
+      
+      // Make ward boundaries more visible
+      if (wardLayer) {
+        wardLayer.setStyle({
+          color: '#2196F3',
+          weight: 3,
+          opacity: 1,
+          fillColor: '#BBDEFB',
+          fillOpacity: 0.2,
+          dashArray: ''
+        });
+      }
+    } else {
+      this.classList.remove('active');
+      this.innerHTML = `
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        Plan Ward Route
+      `;
+      selectedWard = null;
+      clearRoute();
+      document.getElementById('infoCard').classList.remove('active');
+      
+      // Reset ward boundaries
+      if (wardLayer) {
+        wardLayer.setStyle({
+          color: '#2196F3',
+          weight: 2.5,
+          opacity: 0.8,
+          fillColor: '#E3F2FD',
+          fillOpacity: 0.1,
+          dashArray: '5, 5'
+        });
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

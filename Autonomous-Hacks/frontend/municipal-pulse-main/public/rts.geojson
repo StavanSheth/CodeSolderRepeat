@@ -1,0 +1,45 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Vastral RTS" },
+      "geometry": { "type": "Point", "coordinates": [72.6453, 23.0419] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Rakhial RTS" },
+      "geometry": { "type": "Point", "coordinates": [72.5924, 23.0525] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Vadaj RTS" },
+      "geometry": { "type": "Point", "coordinates": [72.5809, 23.0763] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Shahwadi RTS" },
+      "geometry": { "type": "Point", "coordinates": [72.5372, 23.0089] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Naroda RTS" },
+      "geometry": { "type": "Point", "coordinates": [72.6349, 23.0768] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Vatva RTS" },
+      "geometry": { "type": "Point", "coordinates": [72.6034, 22.9974] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Khadia RTS" },
+      "geometry": { "type": "Point", "coordinates": [72.5848, 23.0113] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Sola RTS" },
+      "geometry": { "type": "Point", "coordinates": [72.5401, 23.0572] }
+    }
+  ]
+}

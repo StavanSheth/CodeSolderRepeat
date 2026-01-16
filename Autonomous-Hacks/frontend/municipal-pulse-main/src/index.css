@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Municipal Corporation Dashboard Design System
+   Professional, enterprise-grade, government-appropriate
+   Data-first, no flashy animations, high readability
+*/
+
+@layer base {
+  :root {
+    /* Core backgrounds - off-white/light grey */
+    --background: 210 20% 98%;
+    --foreground: 220 20% 14%;
+
+    /* Cards and surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 14%;
+
+    /* Primary - Deep navy/charcoal for government feel */
+    --primary: 220 25% 20%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Light grey surfaces */
+    --secondary: 210 15% 94%;
+    --secondary-foreground: 220 20% 14%;
+
+    /* Muted - For labels and secondary text */
+    --muted: 210 15% 94%;
+    --muted-foreground: 220 10% 46%;
+
+    /* Accent - Subtle blue for informational */
+    --accent: 210 15% 94%;
+    --accent-foreground: 220 20% 14%;
+
+    /* Semantic colors for data visualization */
+    --success: 152 60% 38%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 152 40% 94%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-muted: 38 80% 94%;
+
+    --critical: 0 72% 51%;
+    --critical-foreground: 0 0% 100%;
+    --critical-muted: 0 60% 94%;
+
+    --info: 210 75% 50%;
+    --info-foreground: 0 0% 100%;
+    --info-muted: 210 60% 94%;
+
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 210 20% 88%;
+    --input: 210 20% 88%;
+    --ring: 220 25% 20%;
+
+    --radius: 0.375rem;
+
+    /* Sidebar */
+    --sidebar-background: 220 25% 18%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 220 25% 18%;
+    --sidebar-accent: 220 25% 24%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 220 20% 25%;
+    --sidebar-ring: 210 75% 50%;
+  }
+
+  .dark {
+    --background: 220 20% 10%;
+    --foreground: 210 20% 95%;
+
+    --card: 220 20% 13%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 220 20% 13%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 210 20% 95%;
+    --primary-foreground: 220 25% 18%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 210 20% 95%;
+
+    --muted: 220 20% 18%;
+    --muted-foreground: 210 15% 60%;
+
+    --accent: 220 20% 18%;
+    --accent-foreground: 210 20% 95%;
+
+    --success: 152 55% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 152 30% 18%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 0 0% 0%;
+    --warning-muted: 38 50% 18%;
+
+    --critical: 0 65% 55%;
+    --critical-foreground: 0 0% 100%;
+    --critical-muted: 0 40% 18%;
+
+    --info: 210 70% 55%;
+    --info-foreground: 0 0% 100%;
+    --info-muted: 210 40% 18%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 210 75% 50%;
+
+    --sidebar-background: 220 25% 8%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 220 25% 8%;
+    --sidebar-accent: 220 25% 14%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 220 20% 15%;
+    --sidebar-ring: 210 75% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Typography hierarchy for dashboard */
+  .kpi-value {
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  .kpi-label {
+    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+
+  .data-label {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .data-value {
+    @apply text-sm font-medium;
+  }
+}
+
+@layer utilities {
+  /* Status indicator utilities */
+  .status-success {
+    @apply bg-success text-success-foreground;
+  }
+
+  .status-warning {
+    @apply bg-warning text-warning-foreground;
+  }
+
+  .status-critical {
+    @apply bg-critical text-critical-foreground;
+  }
+
+  .status-info {
+    @apply bg-info text-info-foreground;
+  }
+
+  /* Muted status backgrounds */
+  .status-success-muted {
+    background-color: hsl(var(--success-muted));
+    color: hsl(var(--success));
+  }
+
+  .status-warning-muted {
+    background-color: hsl(var(--warning-muted));
+    color: hsl(var(--warning));
+  }
+
+  .status-critical-muted {
+    background-color: hsl(var(--critical-muted));
+    color: hsl(var(--critical));
+  }
+
+  .status-info-muted {
+    background-color: hsl(var(--info-muted));
+    color: hsl(var(--info));
+  }
+}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ahmedabad Wards Map</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    body { margin: 0; }
+    #map { height: 100vh; width: 100%; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  // Initialize the map
+  const map = L.map('map');
+
+  // Add base map (OpenStreetMap tiles)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Function to get color based on garbage amount (heatmap)
+  function getHeatmapColor(amount, min, max) {
+    // Normalize the amount between 0 and 1
+    const normalized = (amount - min) / (max - min);
+    
+    // Color scale from green (low) to red (high)
+    const r = Math.floor(255 * normalized);
+    const g = Math.floor(255 * (1 - normalized));
+    const b = 0;
+    
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  // Load wards.geojson
+  fetch('Wards.geojson')
+    .then(res => res.json())
+    .then(wards => {
+      // Add random garbage amounts to each ward
+      wards.features.forEach(feature => {
+        feature.properties.garbage_amount = Math.floor(Math.random() * 1000) + 100; // Random amount between 100-1100
+      });
+
+      // Find min and max garbage amounts
+      const amounts = wards.features.map(f => f.properties.garbage_amount);
+      const minAmount = Math.min(...amounts);
+      const maxAmount = Math.max(...amounts);
+
+      // Add GeoJSON layer
+      const wardsLayer = L.geoJSON(wards, {
+        style: feature => ({
+          color: '#000',        // border color
+          weight: 1,
+          fillColor: getHeatmapColor(feature.properties.garbage_amount, minAmount, maxAmount),
+          fillOpacity: 0.7
+        }),
+
+        onEachFeature: (feature, layer) => {
+          // Popup showing ward name and garbage amount
+          layer.bindPopup(
+            `<b>Ward:</b> ${feature.properties.Name}<br>` +
+            `<b>Garbage Amount:</b> ${feature.properties.garbage_amount} tons`
+          );
+
+          // Hover effect
+          layer.on({
+            mouseover: e => {
+              e.target.setStyle({
+                weight: 3,
+                fillOpacity: 0.9
+              });
+            },
+            mouseout: e => {
+              wardsLayer.resetStyle(e.target);
+            }
+          });
+        }
+      }).addTo(map);
+
+      // Auto-zoom to all wards
+      map.fitBounds(wardsLayer.getBounds());
+    })
+    .catch(err => console.error("Error loading wards.geojson:", err));
+</script>
+
+</body>
+</html>
