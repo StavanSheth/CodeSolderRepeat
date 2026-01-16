@@ -1,0 +1,8 @@
+# Python virtual environments
+.venv
+venv/
+env/
+
+# Node.js dependencies
+node_modules/
+frontend\municipal-pulse-main\node_modules

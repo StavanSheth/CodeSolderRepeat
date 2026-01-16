@@ -1,0 +1,41 @@
+{
+  "batch_id": "string",
+
+  "collection": {
+    "date_time": "ISO_TIMESTAMP",
+    "vehicle_id": "string",
+    "route_id": "string",
+    "operator_id": "string"
+  },
+
+  "location": {
+    "city": "string",
+    "zone": "string",
+    "collection_point": "string",
+    "gps": { "lat": 0.0, "lon": 0.0 }
+  },
+
+  "source": {
+    "type": "household | commercial | industrial | medical | construction | public",
+    "area_type": "residential | market | hospital | industrial | mixed",
+    "ward": "string"
+  },
+
+  "waste_manifest": [
+    {
+      "category": "organic | plastic | paper | metal | glass | e-waste | hazardous | biomedical | construction",
+      "subtype": "string",
+      "quantity": 0,
+      "unit": "kg | tons",
+      "segregation_quality": "good | fair | poor",
+      "contamination_level": "none | low | medium | high",
+      "special_handling": ["none", "sharp", "toxic", "bio", "flammable"]
+    }
+  ],
+
+  "processing_flags": {
+    "priority": "normal | high | urgent",
+    "requires_manual_check": false,
+    "non_compliance_detected": false
+  }
+}
